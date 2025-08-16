@@ -1,0 +1,90 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thunderbird Demo App</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f9f9f9; }
+    header { background:#0F3B5F; color:white; padding:12px; }
+    #tabs { display:flex; background:#ddd; padding:8px; }
+    .tab-btn { margin-right:8px; padding:6px 10px; border:none; cursor:pointer; border-radius:4px; }
+    .tab-btn.active { background:white; }
+    .view { display:none; padding:12px; }
+    .view.active { display:block; }
+    .card { background:white; border:1px solid #ccc; padding:10px; margin:8px 0; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <header><h1>Thunderbird Demo App</h1></header>
+  <div id="tabs">
+    <button class="tab-btn active" data-tab="schedule">Schedule</button>
+    <button class="tab-btn" data-tab="class">Class & Live</button>
+    <button class="tab-btn" data-tab="favorites">Favorites</button>
+  </div>
+
+  <section id="schedule" class="view active">
+    <div class="card"><h3>Schedule</h3><div id="scheduleList"></div></div>
+  </section>
+  <section id="class" class="view">
+    <div class="card"><h3>Class View</h3>
+      <select id="classSel"></select>
+      <button id="showStart">Show Start List</button>
+      <button id="nextTick">Advance Live</button>
+      <div id="startList"></div>
+      <div id="liveResults"></div>
+    </div>
+  </section>
+  <section id="favorites" class="view">
+    <div class="card"><h3>Favorites</h3><div id="favList"></div></div>
+  </section>
+
+  <script>
+    const eventData = {"event_id": "E1", "name": "Thunderbird Show Park Summer Series", "start_date": "2025-08-01", "end_date": "2025-08-10"};
+    const rings = [{"ring_id": "R1", "name": "Main International Ring"}, {"ring_id": "R2", "name": "Hunter Ring"}];
+    const classes = [{"class_id": "C1", "ring_id": "R1", "name": "1.40m Welcome", "level": "1.40m", "discipline": "Jumping", "start_time_est": "10:00", "status": "Scheduled"}, {"class_id": "C2", "ring_id": "R1", "name": "1.50m Grand Prix", "level": "1.50m", "discipline": "Jumping", "start_time_est": "14:00", "status": "Scheduled"}, {"class_id": "C3", "ring_id": "R2", "name": "3'6\" Amateur Hunter", "level": "3'6\"", "discipline": "Hunter", "start_time_est": "09:00", "status": "Scheduled"}];
+    const horses = [{"horse_id": "H1", "name": "Silver Star"}, {"horse_id": "H2", "name": "Blue Sky"}, {"horse_id": "H3", "name": "Firefly"}];
+    const riders = [{"rider_id": "R1", "name": "Jane Doe"}, {"rider_id": "R2", "name": "John Smith"}];
+    const startLists = {"C1": [{"entry_id": "E1", "horse_id": "H1", "rider_id": "R1", "draw_order": 1}, {"entry_id": "E2", "horse_id": "H2", "rider_id": "R2", "draw_order": 2}], "C2": [{"entry_id": "E3", "horse_id": "H3", "rider_id": "R1", "draw_order": 1}], "C3": [{"entry_id": "E4", "horse_id": "H2", "rider_id": "R2", "draw_order": 1}]};
+
+    const horseById = Object.fromEntries(horses.map(h=>[h.horse_id,h]));
+    const riderById = Object.fromEntries(riders.map(r=>[r.rider_id,r]));
+    const classById = Object.fromEntries(classes.map(c=>[c.class_id,c]));
+
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Schedule
+    function renderSchedule(){
+      const wrap=document.getElementById('scheduleList');
+      wrap.innerHTML='<ul>'+classes.map(c=>'<li>'+c.name+' ('+c.start_time_est+')</li>').join('')+'</ul>';
+    }
+    renderSchedule();
+
+    // Class view
+    const classSel=document.getElementById('classSel');
+    classes.forEach(c=>{let o=document.createElement('option');o.value=c.class_id;o.textContent=c.name;classSel.appendChild(o);});
+    let liveIndex={};
+    document.getElementById('showStart').onclick=()=>{
+      const cid=classSel.value;
+      const list=startLists[cid];
+      document.getElementById('startList').innerHTML='<ul>'+list.map(e=>'<li>'+horseById[e.horse_id].name+' ridden by '+riderById[e.rider_id].name+'</li>').join('')+'</ul>';
+    };
+    document.getElementById('nextTick').onclick=()=>{
+      const cid=classSel.value; if(!(cid in liveIndex)) liveIndex[cid]=0;
+      const list=startLists[cid]; if(liveIndex[cid]>=list.length) return;
+      const e=list[liveIndex[cid]++];
+      const res=horseById[e.horse_id].name+' / '+riderById[e.rider_id].name+' finished with '+Math.floor(Math.random()*8)+' faults';
+      document.getElementById('liveResults').innerHTML+='<div>'+res+'</div>';
+    };
+  </script>
+</body>
+</html>
